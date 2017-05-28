@@ -29,43 +29,98 @@
     };
 
 
-    $.fn.flumen = function(o){
+    $.fn.flumen = function(opt){
         var $slider = $(this);
-        $slider.kinetic();
 
-        var $ch = $slider.children();
-        var items = $ch.length;
-        $slider.prepend($ch.clone().addClass('clone'));
-        $slider.append($ch.clone().addClass('clone'));
+        var o = {
+            'loop': true,
+            'center': true,
+            'fluid': true,
+            'arrows': false,
+            'dots': false,
+            'mousewheel': false,
+            'speed': 300
+        }
 
-        var $first_child = $($ch[0]);
-        var $last_child = $($ch[$ch.length-1]);
-        var sw = $slider.width();
+        $.extend(o, opt);
 
-        var start = $first_child.offset().left;
+        if (o.fluid) {
+            $slider.kinetic();
+
+            $slider.mousewheel(function(event) {
+                $slider.scrollLeft($slider.scrollLeft() + event.deltaX);
+            });
+        }
+
+        o.children = $slider.children();
+        o.original = o.children;
+        o.items = o.children.length;
+        o.children.addClassIncrement();
+
+        o.map = {};
+
+        var hasCloned = false;
+
+        function calc() {
+            o.width = $slider.width();
 
 
-        var pos = [];
-        $slider.children().addClassIncrement(null, function(i, $elem) {
-              pos.push($elem.offset().left);
-        });
+            if (!hasCloned) {
+                if (!o.cloned_left) {
+                    o.cloned_left = o.children.clone(true).addClass('clone');
+                    o.cloned_left.addClass('clone-left');
+                    o.cloned_right = o.children.clone(true).addClass('clone-right');
+                }
 
-        console.log(pos);
+                $slider.prepend(o.cloned_left);
+                $slider.append(o.cloned_right);
+
+                o.children = $slider.children();
+
+                hasCloned = true;
+            }
+
+            for (var i = 0; i < o.children.length; i++) {
+                var $elem = $(o.children[i]);
+
+                var width = $elem.width();
+                var owidth = $elem.outerWidth(true);
+                var offset = $elem.offset().left;
+
+                o.map[i] = {
+                    'elem': $elem,
+                    'width': width,
+                    'start': offset,
+                    'end': offset + width,
+                    'outerWidth': owidth
+                }
+
+                if ($elem.hasClass('cloned')) {
+                    o.map[i].cloned = true;
+                }
+            }
+        }
+
+        console.log(o);
+
+        $(window).resize(calc);
+        calc();
+
+
+        var start = o.map[o.items].start;
         $slider.scrollLeft(start);
 
-        var end_pos = pos[items*3-1] + $last_child.width() - sw - 50;
-
+        var end_pos = o.map[o.items*3-1].start + o.map[o.items*3-1].width - o.width - 50;
 
         $slider.scroll(function(e) {
-          //console.log($slider.scrollLeft());
           if ($slider.scrollLeft() <= 50) {
             $(this).trigger('flumina.start', o);
-            $slider.scrollLeft(pos[items-1]-$slider.scrollLeft());
+            $slider.scrollLeft(o.map[o.items].start - $slider.scrollLeft() + 50);
           }
 
           if ($slider.scrollLeft() >= end_pos) {
               $(this).trigger('flumina.end', o);
-              $slider.scrollLeft(pos[items-1]+ (end_pos - $slider.scrollLeft()));
+              $slider.scrollLeft(o.map[o.items*2-1].start + o.map[o.items*2-1].width -o.width-50);
           }
         });
     };
