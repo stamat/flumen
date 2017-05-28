@@ -31,6 +31,7 @@
 
     $.fn.flumen = function(opt){
         var $slider = $(this);
+        var mod = 50;
 
         var o = {
             'loop': true,
@@ -92,35 +93,71 @@
                     'width': width,
                     'start': offset,
                     'end': offset + width,
-                    'outerWidth': owidth
+                    'outerEnd': offset + owidth,
+                    'outerWidth': owidth,
+                    'num': i,
+                    'half_width': width / 2
                 }
 
                 if ($elem.hasClass('cloned')) {
                     o.map[i].cloned = true;
                 }
             }
-        }
 
-        console.log(o);
+            o.end_position = o.map[o.items*3-1].start + o.map[o.items*3-1].width - o.width - mod;
+            o.reset_left = o.map[o.items].start + mod;
+            o.reset_right = o.map[o.items*2-1].start + o.map[o.items*2-1].width - o.width - mod;
+            o.half_width = o.width/2;
+        }
 
         $(window).resize(calc);
         calc();
 
+        //such a lazy thing to do... I'll have to think a bit on how to improve this
+        function getCurrentItem() {
+            var left = $slider.scrollLeft();
+            if (o.center) {
+                left = left + o.half_width;
+            }
 
-        var start = o.map[o.items].start;
+            for (var i in o.map) {
+                var item = o.map[i];
+                if (left > item.start && left < item.outerEnd ) {
+                    return item;
+                };
+            }
+
+            return null;
+        }
+
+        //set the start to the original first item
+        var first_item = o.map[o.items];
+        var start = first_item.start;
+
+        if (o.center) {
+            start = start - (o.half_width - first_item.half_width);
+        }
         $slider.scrollLeft(start);
 
-        var end_pos = o.map[o.items*3-1].start + o.map[o.items*3-1].width - o.width - 50;
 
+        var current = null;
         $slider.scroll(function(e) {
-          if ($slider.scrollLeft() <= 50) {
-            $(this).trigger('flumina.start', o);
-            $slider.scrollLeft(o.map[o.items].start - $slider.scrollLeft() + 50);
-          }
+            var left = $slider.scrollLeft();
 
-          if ($slider.scrollLeft() >= end_pos) {
-              $(this).trigger('flumina.end', o);
-              $slider.scrollLeft(o.map[o.items*2-1].start + o.map[o.items*2-1].width -o.width-50);
+            if (left <= mod) {
+                $(this).trigger('flumina.start', o);
+                $slider.scrollLeft(o.reset_left);
+            }
+
+            if (left >= o.end_position) {
+                  $(this).trigger('flumina.end', o);
+                  $slider.scrollLeft(o.reset_right);
+              }
+
+              var item = getCurrentItem();
+              if (item && (!current || current.num !== item.num)) {
+              current = item;
+              $(this).trigger('flumina.slide', o, item);
           }
         });
     };
