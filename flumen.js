@@ -113,6 +113,8 @@
             o.reset_right = o.map[o.items*2-1].start + o.map[o.items*2-1].width - o.width - mod;
             o.half_width = o.width/2;
         }
+        $(window).resize(calc);
+        calc();
 
         var animating = false;
         var from = 0;
@@ -133,13 +135,13 @@
                 left = left - (o.half_width - item.half_width);
             }
             animating = true;
-            $slider.stop(true).animate({ scrollLeft: left }, speed, function(){
+
+            $(this).trigger('flumen.beforechange', o);
+            $slider.stop(true).animate({ scrollLeft: left }, speed, function() {
                 animating = false;
+                $(this).trigger('flumen.afterchange', o);
             });
         }
-
-        $(window).resize(calc);
-        calc();
 
         //such a lazy thing to do... I'll have to think a bit on how to improve this
         function getCurrentItem() {
@@ -156,6 +158,21 @@
             }
 
             return null;
+        }
+
+        //TODO: Get current visible, get all items currently visible in the viewport
+        function getCurrentVisibleItems() {
+            var left = $slider.scrollLeft();
+            var items = [];
+
+            for (var i in o.map) {
+                var item = o.map[i];
+                // if (left < item.end && left + o.width < item.start) {
+                    items.push(item);
+                }
+            }
+
+            return items;
         }
 
         //set the start to the original first item
@@ -190,6 +207,8 @@
                 }
              }
 
+             console.log(getCurrentVisibleItems());
+
             var item = getCurrentItem();
             if (item && (!o.current || o.current.num !== item.num)) {
                 o.current = item;
@@ -197,16 +216,15 @@
             }
         });
 
-        $slider.on('flumen.goto', function(event, num){
+        $slider.on('flumen.goto', function(event, num) {
             goTo(o.items+num-1);
         });
 
-        $slider.on('flumen.left', function(event){
-            console.log(o.current.num - 1);
+        $slider.on('flumen.left', function(event) {
             goTo(o.current.num - 1);
         });
 
-        $slider.on('flumen.right', function(event){
+        $slider.on('flumen.right', function(event) {
             goTo(o.current.num + 1);
         });
 
