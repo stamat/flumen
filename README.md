@@ -5,6 +5,7 @@ This is a super simple responsive carousel plugin that doesn't snap to the slide
 
 
 ## Dependencies
+* jQuery 1.8+ - https://github.com/jquery/jquery
 * jQuery.kinetic - https://github.com/davetayls/jquery.kinetic
 * jquery-mousewheel [optional] - https://github.com/jquery/jquery-mousewheel
 
@@ -18,11 +19,11 @@ This is a super simple responsive carousel plugin that doesn't snap to the slide
 
 ## Options
 
-    'fluid' [default: false]
-
     'loop' [default: true]
 
     'center' [default: true]
+
+    'fluid' [default: true]
 
     'arrows' [default: false]
 

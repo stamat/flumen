@@ -1,0 +1,36 @@
+{
+  "name": "flumen",
+  "description": "Fluid jQuery Carousel",
+  "main": "flumen.js",
+  "dependencies": {
+    "jquery.kinetic": "latest",
+    "jquery-mousewheel": "latest"
+  },
+  "devDependencies": {
+    "jquery": "~1.12.0"
+  },
+  "ignore": [
+    "package.json",
+    "node_modules",
+    "bower_components",
+    "**/.*",
+    "test",
+    "tests"
+  ],
+  "homepage": "http://stamat.github.io/flumen",
+  "authors": [
+    "Stamat <nikola.stamatovic@stamat.info>"
+  ],
+  "keywords": [
+      "carousel",
+      "carousel-plugin",
+      "jquery",
+      "jquery-plugin",
+      "javascript",
+      "carousel-component",
+      "slider",
+      "slider-plugin"
+  ],
+  "license": "MIT",
+  "private": false
+}
