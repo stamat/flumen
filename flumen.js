@@ -29,8 +29,45 @@
     };
 
 
-    $.fn.flumen = function(){
+    $.fn.flumen = function(o){
+        var $slider = $(this);
+        $slider.kinetic();
 
+        var $ch = $slider.children();
+        var items = $ch.length;
+        $slider.prepend($ch.clone().addClass('clone'));
+        $slider.append($ch.clone().addClass('clone'));
+
+        var $first_child = $($ch[0]);
+        var $last_child = $($ch[$ch.length-1]);
+        var sw = $slider.width();
+
+        var start = $first_child.offset().left;
+
+
+        var pos = [];
+        $slider.children().addClassIncrement(null, function(i, $elem) {
+              pos.push($elem.offset().left);
+        });
+
+        console.log(pos);
+        $slider.scrollLeft(start);
+
+        var end_pos = pos[items*3-1] + $last_child.width() - sw - 50;
+
+
+        $slider.scroll(function(e) {
+          //console.log($slider.scrollLeft());
+          if ($slider.scrollLeft() <= 50) {
+            $(this).trigger('flumina.start', o);
+            $slider.scrollLeft(pos[items-1]-$slider.scrollLeft());
+          }
+
+          if ($slider.scrollLeft() >= end_pos) {
+              $(this).trigger('flumina.end', o);
+              $slider.scrollLeft(pos[items-1]+ (end_pos - $slider.scrollLeft()));
+          }
+        });
     };
 
 })(jQuery);
