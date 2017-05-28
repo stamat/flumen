@@ -41,7 +41,7 @@
             'dots': false,
             'mousewheel': false,
             'speed': 300
-        }
+        };
 
         $.extend(o, opt);
 
@@ -74,6 +74,10 @@
                 }
 
                 $slider.prepend(o.cloned_left);
+
+                //TODO: we dont really need the right clones, except if we want
+                //to make infinite loop regardles of the number of items.
+                //Removing them would aid performance, but I'll leave them for now...
                 $slider.append(o.cloned_right);
 
                 o.children = $slider.children();
@@ -97,7 +101,7 @@
                     'outerWidth': owidth,
                     'num': i,
                     'half_width': width / 2
-                }
+                };
 
                 if ($elem.hasClass('cloned')) {
                     o.map[i].cloned = true;
@@ -108,6 +112,30 @@
             o.reset_left = o.map[o.items].start + mod;
             o.reset_right = o.map[o.items*2-1].start + o.map[o.items*2-1].width - o.width - mod;
             o.half_width = o.width/2;
+        }
+
+        var animating = false;
+        var from = 0;
+        var to = 0;
+
+        function goTo(num, speed) {
+            var item = o.map[num];
+
+            to = num;
+            from = o.current.num;
+
+            if (!speed) {
+                speed = o.speed;
+            }
+
+            var left = item.start;
+            if (o.center) {
+                left = left - (o.half_width - item.half_width);
+            }
+            animating = true;
+            $slider.stop(true).animate({ scrollLeft: left }, speed, function(){
+                animating = false;
+            });
         }
 
         $(window).resize(calc);
@@ -124,7 +152,7 @@
                 var item = o.map[i];
                 if (left > item.start && left < item.outerEnd ) {
                     return item;
-                };
+                }
             }
 
             return null;
@@ -140,26 +168,49 @@
         $slider.scrollLeft(start);
 
 
-        var current = null;
+        o.current = null;
         $slider.scroll(function(e) {
             var left = $slider.scrollLeft();
 
             if (left <= mod) {
-                $(this).trigger('flumina.start', o);
+                $(this).trigger('flumen.start', o);
                 $slider.scrollLeft(o.reset_left);
+
+                if (animating) {
+                    goTo(o.items+to, o.speed/2);
+                }
             }
 
             if (left >= o.end_position) {
-                  $(this).trigger('flumina.end', o);
-                  $slider.scrollLeft(o.reset_right);
-              }
+                $(this).trigger('flumen.end', o);
+                $slider.scrollLeft(o.reset_right);
 
-              var item = getCurrentItem();
-              if (item && (!current || current.num !== item.num)) {
-              current = item;
-              $(this).trigger('flumina.slide', o, item);
-          }
+                if (animating) {
+                    goTo(o.items*2-1); //this causes an issue, the movement is too fast...
+                }
+             }
+
+            var item = getCurrentItem();
+            if (item && (!o.current || o.current.num !== item.num)) {
+                o.current = item;
+                $(this).trigger('flumen.slide', o, item);
+            }
         });
+
+        $slider.on('flumen.goto', function(event, num){
+            goTo(o.items+num-1);
+        });
+
+        $slider.on('flumen.left', function(event){
+            console.log(o.current.num - 1);
+            goTo(o.current.num - 1);
+        });
+
+        $slider.on('flumen.right', function(event){
+            goTo(o.current.num + 1);
+        });
+
+        $(this).trigger('flumen.init', o);
     };
 
 })(jQuery);

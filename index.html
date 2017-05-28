@@ -17,6 +17,20 @@
                 $('.slider').flumen({
                     'arrows': true
                 });
+
+                $('.dot').on('click', function(){
+                    var num = $(this).data('num');
+                    console.log(num);
+                    $('.slider').trigger('flumen.goto', num);
+                });
+
+                $('.larr').on('click', function(){
+                    $('.slider').trigger('flumen.left');
+                });
+
+                $('.rarr').on('click', function(){
+                    $('.slider').trigger('flumen.right');
+                });
             });
         </script>
     </head>
@@ -37,6 +51,25 @@
           <div style="background-image: url(http://lorempixel.com/300/300/?13)">13</div>
           <div style="background-image: url(http://lorempixel.com/300/300/?14)">14</div>
           <div style="background-image: url(http://lorempixel.com/300/300/?15)">15</div>
+        </div>
+        <div class="controls">
+            <a href="#" class="larr">&larr; left</a>
+            <a href="#" class="dot" data-num="1">1</a>
+            <a href="#" class="dot" data-num="2">2</a>
+            <a href="#" class="dot" data-num="3">3</a>
+            <a href="#" class="dot" data-num="4">4</a>
+            <a href="#" class="dot" data-num="5">5</a>
+            <a href="#" class="dot" data-num="6">6</a>
+            <a href="#" class="dot" data-num="7">7</a>
+            <a href="#" class="dot" data-num="8">8</a>
+            <a href="#" class="dot" data-num="9">9</a>
+            <a href="#" class="dot" data-num="10">10</a>
+            <a href="#" class="dot" data-num="11">11</a>
+            <a href="#" class="dot" data-num="12">12</a>
+            <a href="#" class="dot" data-num="13">13</a>
+            <a href="#" class="dot" data-num="14">14</a>
+            <a href="#" class="dot" data-num="15">15</a>
+            <a href="#" class="rarr">right &rarr;</a>
         </div>
     </body>
 </html>
