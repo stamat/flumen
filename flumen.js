@@ -41,7 +41,8 @@
             'dots': false,
             'mousewheel': false,
             'speed': 300,
-            'margin': 0
+            'margin': 0,
+            'resize_timeout': 200
         };
 
         $.extend(o, opt);
@@ -66,62 +67,6 @@
 
         o.map = {};
 
-        var hasCloned = false;
-
-        function calc() {
-            o.width = $slider.width();
-
-
-            if (!hasCloned) {
-                if (!o.cloned_left) {
-                    o.cloned_left = o.children.clone(true).addClass('clone');
-                    o.cloned_left.addClass('clone-left');
-                    o.cloned_right = o.children.clone(true).addClass('clone-right');
-                }
-
-                $slider.prepend(o.cloned_left);
-
-                //TODO: we dont really need the right clones, except if we want
-                //to make infinite loop regardles of the number of items.
-                //Removing them would aid performance, but I'll leave them for now...
-                $slider.append(o.cloned_right);
-
-                o.children = $slider.children();
-
-                hasCloned = true;
-            }
-
-            for (var i = 0; i < o.children.length; i++) {
-                var $elem = $(o.children[i]);
-
-                var width = $elem.width();
-                var owidth = $elem.outerWidth(true);
-                var offset = $elem.position().left;
-
-                o.map[i] = {
-                    'elem': $elem,
-                    'width': width,
-                    'start': offset,
-                    'end': offset + width,
-                    'outerEnd': offset + owidth,
-                    'outerWidth': owidth,
-                    'num': i,
-                    'half_width': width / 2
-                };
-
-                if ($elem.hasClass('cloned')) {
-                    o.map[i].cloned = true;
-                }
-            }
-
-            o.end_position = o.map[o.items*3-1].start + o.map[o.items*3-1].width - o.width - mod;
-            o.reset_left = o.map[o.items].start + mod;
-            o.reset_right = o.map[o.items*2-1].start + o.map[o.items*2-1].width - o.width - mod;
-            o.half_width = o.width/2;
-        }
-        $(window).resize(calc);
-        calc();
-
         var animating = false;
         var from = 0;
         var to = 0;
@@ -130,11 +75,13 @@
             var item = o.map[num];
 
             to = num;
-            from = o.current.num;
+            from = o.current.id;
 
             if (!speed) {
                 speed = o.speed;
             }
+
+            console.log(from + ' - ' + to);
 
             var left = item.start;
             if (o.center) {
@@ -181,15 +128,91 @@
             return items;
         }
 
-        //set the start to the original first item
-        var first_item = o.map[o.items];
-        var start = first_item.start;
+        function resetPosition(num) {
+            console.log(num);
+            var item = o.map[num];
+            console.log(o.map);
+            var start = item.start;
 
-        if (o.center) {
-            start = start - (o.half_width - first_item.half_width - o.margin);
+            if (o.center) {
+                start = start - (o.half_width - item.half_width - o.margin);
+            }
+            $slider.scrollLeft(start);
         }
-        $slider.scrollLeft(start);
 
+        function calc() {
+            $(this).trigger('flumen.beforeresize', o);
+            o.width = $slider.width();
+
+            console.log('RESIZE!');
+
+            if (!o.cloned_left) {
+                o.cloned_left = o.children.clone(true).addClass('clone');
+                o.cloned_left.addClass('clone-left');
+                o.cloned_right = o.children.clone(true).addClass('clone-right');
+
+                $slider.prepend(o.cloned_left);
+
+                //TODO: we dont really need the right clones, except if we want
+                //to make infinite loop regardles of the number of items.
+                //Removing them would aid performance, but I'll leave them for now...
+                $slider.append(o.cloned_right);
+
+                o.children = $slider.children();
+            }
+
+
+            //preserve scroll positions
+            var left = $slider.scrollLeft();
+            $slider.scrollLeft(0);
+
+            for (var i = 0; i < o.children.length; i++) {
+                var $elem = $(o.children[i]);
+
+                var width = $elem.width();
+                var owidth = $elem.outerWidth(true);
+                var offset = $elem.position().left;
+
+                o.map[i] = {
+                    'elem': $elem,
+                    'width': width,
+                    'start': offset,
+                    'end': offset + width,
+                    'outerEnd': offset + owidth,
+                    'outerWidth': owidth,
+                    'id': i,
+                    'num': i % o.items,
+                    'half_width': width / 2
+                };
+
+                if ($elem.hasClass('cloned')) {
+                    o.map[i].cloned = true;
+                }
+            }
+
+            o.end_position = o.map[o.items*3-1].start + o.map[o.items*3-1].width - o.width - mod;
+            o.reset_left = o.map[o.items].start + mod;
+            o.reset_right = o.map[o.items*2-1].start + o.map[o.items*2-1].width - o.width - mod;
+            o.half_width = o.width/2;
+
+            $slider.scrollLeft(left);
+            $(this).trigger('flumen.afterresize', o);
+        }
+
+        var timeout = null; //resize timeout, to trigger it only once on resize.
+        $(window).resize(function(){
+            if (!timeout) {
+                timeout = setTimeout(function(){
+                    clearTimeout(timeout);
+                    timeout = null;
+                    calc();
+                }, o.resize_timeout);
+            }
+        });
+        calc();
+
+        //set the start to the original first item
+        resetPosition(o.items);
 
         o.current = null;
         $slider.scroll(function(e) {
@@ -214,22 +237,29 @@
              }
 
             var item = getCurrentItem();
-            if (item && (!o.current || o.current.num !== item.num)) {
+            if (item && (!o.current || o.current.id !== item.id)) {
                 o.current = item;
-                $(this).trigger('flumen.slide', o, item);
+                $(this).trigger('flumen.slide', item);
             }
         });
+
+
 
         $slider.on('flumen.goto', function(event, num) {
             goTo(o.items+num-1);
         });
 
         $slider.on('flumen.left', function(event) {
-            goTo(o.current.num - 1);
+            goTo(o.current.id - 1);
         });
 
         $slider.on('flumen.right', function(event) {
-            goTo(o.current.num + 1);
+            goTo(o.current.id + 1);
+        });
+
+        $slider.on('flumen.slide', function(event, item) {
+            //console.log(item.num);
+            console.log(item.num);
         });
 
         $(this).trigger('flumen.init', o);

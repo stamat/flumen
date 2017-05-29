@@ -16,13 +16,12 @@
             $('document').ready(function(){
                 $('.slider').flumen({
                     'arrows': true,
-                    'margin': 50,
+                    'margin': 5,
                     'center': true
                 });
 
                 $('.dot').on('click', function(){
                     var num = $(this).data('num');
-                    console.log(num);
                     $('.slider').trigger('flumen.goto', num);
                 });
 
