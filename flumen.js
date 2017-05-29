@@ -42,7 +42,8 @@
             'mousewheel': false,
             'speed': 300,
             'margin': 0,
-            'resize_timeout': 200
+            'resize_timeout': 200,
+            'resize_reposition': true
         };
 
         $.extend(o, opt);
@@ -81,8 +82,6 @@
                 speed = o.speed;
             }
 
-            console.log(from + ' - ' + to);
-
             var left = item.start;
             if (o.center) {
                 left = left - (o.half_width - item.half_width - o.margin);
@@ -105,7 +104,8 @@
 
             for (var i in o.map) {
                 var item = o.map[i];
-                if (left > item.start && left < item.outerEnd ) {
+                if (left >= item.start && left <= item.outerEnd ) {
+                    console.log(item);
                     return item;
                 }
             }
@@ -113,7 +113,8 @@
             return null;
         }
 
-        //TODO: Get current visible, get all items currently visible in the viewport
+        //TODO: Get current visible, get all items currently visible in the viewport,
+        // this will be useful for animating the slides with Farsight
         function getCurrentVisibleItems() {
             var left = $slider.scrollLeft();
             var items = [];
@@ -131,7 +132,6 @@
         function resetPosition(num) {
             console.log(num);
             var item = o.map[num];
-            console.log(o.map);
             var start = item.start;
 
             if (o.center) {
@@ -144,9 +144,7 @@
             $(this).trigger('flumen.beforeresize', o);
             o.width = $slider.width();
 
-            console.log('RESIZE!');
-
-            if (!o.cloned_left) {
+            if (!o.cloned_left && o.loop) {
                 o.cloned_left = o.children.clone(true).addClass('clone');
                 o.cloned_left.addClass('clone-left');
                 o.cloned_right = o.children.clone(true).addClass('clone-right');
@@ -173,11 +171,12 @@
                 var owidth = $elem.outerWidth(true);
                 var offset = $elem.position().left;
 
-                o.map[i] = {
+                o.orig_map = [];
+                var item = {
                     'elem': $elem,
                     'width': width,
-                    'start': offset,
-                    'end': offset + width,
+                    'start': o.center ? offset : offset - o.margin,
+                    'end': o.center ? offset + width : offset + o.margin + width,
                     'outerEnd': offset + owidth,
                     'outerWidth': owidth,
                     'id': i,
@@ -186,13 +185,22 @@
                 };
 
                 if ($elem.hasClass('cloned')) {
-                    o.map[i].cloned = true;
+                    item.cloned = true;
+                } else {
+                    o.orig_map.push(item);
                 }
+
+                o.map[i] = item;
             }
 
-            o.end_position = o.map[o.items*3-1].start + o.map[o.items*3-1].width - o.width - mod;
-            o.reset_left = o.map[o.items].start + mod;
-            o.reset_right = o.map[o.items*2-1].start + o.map[o.items*2-1].width - o.width - mod;
+            if (o.loop) {
+                o.end_position = o.map[o.items*3-1].start + o.map[o.items*3-1].width - o.width - mod;
+                o.reset_left = o.map[o.items].start + mod;
+                o.reset_right = o.map[o.items*2-1].start + o.map[o.items*2-1].width - o.width - mod;
+            } else {
+                o.end_position = o.map[o.items-1].start + o.map[o.items-1].width - o.width;
+            }
+
             o.half_width = o.width/2;
 
             $slider.scrollLeft(left);
@@ -212,41 +220,70 @@
         calc();
 
         //set the start to the original first item
-        resetPosition(o.items);
+        o.start_num = 0;
+        if (o.loop) {
+            o.start_num = o.items;
+        }
+        resetPosition(o.start_num);
 
         o.current = null;
+        var scroll_end_timer = null;
+
         $slider.scroll(function(e) {
             var left = $slider.scrollLeft();
 
-            if (left <= mod) {
-                $(this).trigger('flumen.start', o);
-                $slider.scrollLeft(o.reset_left);
+            if (o.loop) {
+                if (left <= mod) {
+                    $(this).trigger('flumen.start', o);
+                    $slider.scrollLeft(o.reset_left);
 
-                if (animating) {
-                    goTo(o.items+to, o.speed/2);
+                    if (animating) {
+                        goTo(o.items+to, o.speed/2);
+                    }
+                }
+
+                if (left >= o.end_position) {
+                    $(this).trigger('flumen.end', o);
+                    $slider.scrollLeft(o.reset_right);
+
+                    if (animating) {
+                        goTo(o.items*2-1); //this causes an issue, the movement is too fast...
+                    }
+                }
+            } else {
+                if (left === 0) {
+                    $(this).trigger('flumen.start', o);
+                }
+
+                if (left >= o.end_position) {
+                    $(this).trigger('flumen.end', o);
                 }
             }
 
-            if (left >= o.end_position) {
-                $(this).trigger('flumen.end', o);
-                $slider.scrollLeft(o.reset_right);
-
-                if (animating) {
-                    goTo(o.items*2-1); //this causes an issue, the movement is too fast...
-                }
-             }
 
             var item = getCurrentItem();
             if (item && (!o.current || o.current.id !== item.id)) {
                 o.current = item;
                 $(this).trigger('flumen.slide', item);
             }
+
+            if (scroll_end_timer) {
+                clearTimeout(scroll_end_timer);
+            }
+
+            scroll_end_timer = setTimeout(function() {
+                $slider.trigger('flumen.stop', o);
+                scroll_end_timer = null;
+            }, 100);
         });
 
+        if (!o.center && !o.loop) {
+            $slider.trigger('scroll');
+        }
 
 
         $slider.on('flumen.goto', function(event, num) {
-            goTo(o.items+num-1);
+            goTo(o.start_num+num-1);
         });
 
         $slider.on('flumen.left', function(event) {
@@ -258,8 +295,15 @@
         });
 
         $slider.on('flumen.slide', function(event, item) {
-            //console.log(item.num);
             console.log(item.num);
+        });
+
+        $slider.on('flumen.stop', function(event, o) {
+            console.log('flumen.stop');
+        });
+
+        $slider.on('flumen.remove', function(event, o) {
+            //TODO: unbind flumen
         });
 
         $(this).trigger('flumen.init', o);
