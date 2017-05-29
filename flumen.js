@@ -40,7 +40,8 @@
             'arrows': false,
             'dots': false,
             'mousewheel': false,
-            'speed': 300
+            'speed': 300,
+            'margin': 0
         };
 
         $.extend(o, opt);
@@ -53,8 +54,13 @@
             });
         }
 
-        o.children = $slider.children();
+        o.children = $slider.children().addClass('.flumen-slide');
         o.original = o.children;
+
+        if (o.margin) {
+            o.original.css('margin', '0px ' + o.margin + 'px');
+        }
+
         o.items = o.children.length;
         o.children.addClassIncrement();
 
@@ -90,7 +96,7 @@
 
                 var width = $elem.width();
                 var owidth = $elem.outerWidth(true);
-                var offset = $elem.offset().left;
+                var offset = $elem.position().left;
 
                 o.map[i] = {
                     'elem': $elem,
@@ -132,7 +138,7 @@
 
             var left = item.start;
             if (o.center) {
-                left = left - (o.half_width - item.half_width);
+                left = left - (o.half_width - item.half_width - o.margin);
             }
             animating = true;
 
@@ -169,7 +175,7 @@
                 var item = o.map[i];
                 // if (left < item.end && left + o.width < item.start) {
                     items.push(item);
-                }
+                //}
             }
 
             return items;
@@ -180,7 +186,7 @@
         var start = first_item.start;
 
         if (o.center) {
-            start = start - (o.half_width - first_item.half_width);
+            start = start - (o.half_width - first_item.half_width - o.margin);
         }
         $slider.scrollLeft(start);
 
@@ -206,8 +212,6 @@
                     goTo(o.items*2-1); //this causes an issue, the movement is too fast...
                 }
              }
-
-             console.log(getCurrentVisibleItems());
 
             var item = getCurrentItem();
             if (item && (!o.current || o.current.num !== item.num)) {

@@ -2,15 +2,22 @@
   display: flex;
   overflow: hidden;
   -webkit-overflow-scrolling: touch;
-  padding-top: 200px;
-  padding-bottom: 50px;
+  position: relative;
+  margin-bottom: 50px;
+  border: 1px solid blue;
+
+}
+
+.content {
+    min-width: 600px;
+    margin: 0 auto;
+    margin-top: 200px;
 }
 
 .slider > div {
   flex-shrink: 0;
   width: 300px;
   height: 300px;
-  margin: 0 5px;
   color: white;
   background: grey;
   line-height: 300px;
@@ -19,4 +26,20 @@
   font-weight: bold;
   background-repeat: no-repeat;
   background-size: cover;
+  position: relative;
+}
+
+.marker {
+    position: absolute;
+    width: 1px;
+    height: 100%;
+    background: red;
+    top: 0px;
+    left: 50%;
+    margin-left: -0.5px;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
 }
