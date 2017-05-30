@@ -80,7 +80,7 @@
                 left = left - (o.half_width - item.half_width - o.margin);
             }
             animated = true;
-            
+
             $(this).trigger('flumen.beforechange', o);
             $slider.stop(true).animate({ scrollLeft: left }, speed, function() {
                 $(this).trigger('flumen.afterchange', o);
@@ -272,6 +272,10 @@
 
         $slider.on('flumen.left', function(event) {
             goTo(o.current.id - 1);
+        });
+
+        $slider.on('flumen.recalc', function(event, o) {
+            calc();
         });
 
         $slider.on('flumen.right', function(event) {

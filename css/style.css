@@ -28,6 +28,21 @@
   position: relative;
 }
 
+/*
+.num-7 {
+    width: 500px !important;
+}
+
+.num-9 {
+    height: 400px !important;
+}
+
+.num-13 {
+    width: 600px !important;
+    height: 250px !important;
+}
+*/
+ 
 .marker {
     position: absolute;
     width: 1px;
