@@ -4,7 +4,7 @@
   -webkit-overflow-scrolling: touch;
   position: relative;
   margin-bottom: 50px;
-  border: 1px solid blue;
+  /* border: 1px solid blue; */
 
 }
 
@@ -32,7 +32,7 @@
     position: absolute;
     width: 1px;
     height: 100%;
-    background: red;
+    /* background: red; */
     top: 0px;
     left: 50%;
     margin-left: -0.5px;
