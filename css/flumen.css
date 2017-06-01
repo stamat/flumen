@@ -1,0 +1,33 @@
+.flumen {
+  display: flex;
+  overflow: hidden;
+  -webkit-overflow-scrolling: touch;
+  position: relative;
+  margin-bottom: 50px;
+  /* border: 1px solid blue; */
+}
+
+.flumen.no-flexbox {
+    display: block;
+    width: auto;
+    white-space: nowrap;
+}
+
+.flumen .flumen-slide {
+  flex-shrink: 0;
+  width: 300px;
+  height: 300px;
+  color: white;
+  background: grey;
+  line-height: 300px;
+  font-size: 26px;
+  text-align: center;
+  font-weight: bold;
+  background-repeat: no-repeat;
+  background-size: cover;
+  position: relative;
+}
+
+.flumen.no-flexbox .flumen-slide {
+    display: inline-block;
+}

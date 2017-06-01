@@ -1,5 +1,5 @@
 /*!
- * Flumen v1.0.0
+ * Flumen v1.0.1
  *
  * License MIT
  *
@@ -30,9 +30,9 @@
 
 
     $.fn.flumen = function(opt){
-        var $slider = $(this);
+        var $slider = $(this).addClass('flumen');
         var mod = 50;
-        var hasFlexbox =  false; //'flex-shrink' in document.body.style;
+        var hasFlexbox = 'flex-shrink' in document.body.style;
         var timeout = null; //resize timeout, to trigger it only once on resize.
         var scroll_end_timer = null;
 
@@ -223,7 +223,7 @@
                 $slider.trigger('flumen.stop', o);
                 scroll_end_timer = null;
             }, 100);
-        };
+        }
         fn.onscroll = onscroll;
 
 

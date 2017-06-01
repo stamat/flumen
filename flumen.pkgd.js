@@ -747,7 +747,7 @@
 
 
 /*!
- * Flumen v1.0.0
+ * Flumen v1.0.1
  *
  * License MIT
  *
@@ -778,9 +778,13 @@
 
 
     $.fn.flumen = function(opt){
-        var $slider = $(this);
+        var $slider = $(this).addClass('flumen');
         var mod = 50;
+        var hasFlexbox = 'flex-shrink' in document.body.style;
+        var timeout = null; //resize timeout, to trigger it only once on resize.
+        var scroll_end_timer = null;
 
+        var fn = {};
         var o = {
             'loop': true,
             'center': true,
@@ -792,30 +796,8 @@
             'margin': 0,
             'resize_timeout': 200
         };
-        $.extend(o, opt);
 
-        if (o.fluid) {
-            $slider.kinetic();
-
-            $slider.mousewheel(function(event) {
-                $slider.scrollLeft($slider.scrollLeft() + event.deltaX);
-            });
-        }
-
-        o.children = $slider.children().addClass('flumen-slide');
-        o.original = o.children;
-
-        if (o.margin) {
-            o.original.css('margin', '0px ' + o.margin + 'px');
-        }
-
-        o.items = o.children.length;
-        o.children.addClassIncrement();
-
-        o.map = {};
-        o.orig_map = {};
         var animated = false;
-
         function goTo(num, speed) {
             var item = o.map[num];
 
@@ -834,6 +816,7 @@
                 $(this).trigger('flumen.afterchange', o);
             });
         }
+        fn.goTo = goTo;
 
         //such a lazy thing to do... I'll have to think a bit on how to improve this
         function getCurrentItem() {
@@ -852,6 +835,7 @@
 
             return null;
         }
+        fn.getCurrentItem = getCurrentItem;
 
         //TODO: Get current visible, get all items currently visible in the viewport,
         // this will be useful for animating the slides with Farsight
@@ -879,11 +863,13 @@
             }
             $slider.scrollLeft(start);
         }
+        fn.resetPosition = resetPosition;
 
         function calc() {
             $(this).trigger('flumen.beforeresize', o);
             o.width = $slider.width();
 
+            //this is here because we want to enable removing carousel functionality if the widht of the carousel items is less than the widht of the screen
             if (!o.cloned_left && o.loop) {
                 o.cloned_left = o.children.clone(true).addClass('clone clone-left');
                 o.cloned_right = o.children.clone(true).addClass('clone clone-right');
@@ -945,31 +931,9 @@
             $slider.scrollLeft(left);
             $(this).trigger('flumen.afterresize', o);
         }
+        fn.calc = calc;
 
-        var timeout = null; //resize timeout, to trigger it only once on resize.
-        $(window).resize(function(){
-            if (!timeout) {
-                timeout = setTimeout(function(){
-                    clearTimeout(timeout);
-                    timeout = null;
-                    calc();
-                }, o.resize_timeout);
-            }
-        });
-        calc();
-
-        //set the start to the original first item
-        o.start_num = 0;
-        if (o.loop) {
-            o.start_num = o.items;
-        }
-        resetPosition(o.start_num);
-
-
-        o.current = null;
-        var scroll_end_timer = null;
-
-        $slider.scroll(function(e) {
+        function onscroll(e) {
             var left = $slider.scrollLeft();
 
             if (o.loop) {
@@ -1007,27 +971,24 @@
                 $slider.trigger('flumen.stop', o);
                 scroll_end_timer = null;
             }, 100);
-        });
-
-        if (!o.center && !o.loop) {
-            $slider.trigger('scroll');
         }
+        fn.onscroll = onscroll;
 
 
         $slider.on('flumen.goto', function(event, num) {
-            goTo(o.start_num+num-1);
+            fn.goTo(o.start_num+num-1);
         });
 
         $slider.on('flumen.left', function(event) {
-            goTo(o.current.id - 1);
+            fn.goTo(o.current.id - 1);
         });
 
         $slider.on('flumen.recalc', function(event, o) {
-            calc();
+            fn.calc();
         });
 
         $slider.on('flumen.right', function(event) {
-            goTo(o.current.id + 1);
+            fn.goTo(o.current.id + 1);
         });
 
         $slider.on('flumen.slide', function(event, item) {
@@ -1037,7 +998,7 @@
         $slider.on('flumen.stop', function(event, o) {
             if (o.current.cloned && animated) {
                 animated = false;
-                resetPosition(o.orig_map[o.current.num].id);
+                fn.resetPosition(o.orig_map[o.current.num].id);
             }
         });
 
@@ -1045,6 +1006,62 @@
             //TODO: unbind flumen
         });
 
+        function init() {
+            $.extend(o, opt);
+
+            if (!hasFlexbox) {
+                $slider.addClass('no-flexbox');
+            }
+
+            if (o.fluid) {
+                $slider.kinetic();
+
+                $slider.mousewheel(function(event) {
+                    $slider.scrollLeft($slider.scrollLeft() + event.deltaX);
+                });
+            }
+
+            o.children = $slider.children().addClass('flumen-slide');
+            o.original = o.children;
+
+            if (o.margin) {
+                o.original.css('margin', '0px ' + o.margin + 'px');
+            }
+
+            o.items = o.children.length;
+            o.children.addClassIncrement();
+
+            o.map = {};
+            o.orig_map = {};
+
+            $(window).resize(function(){
+                if (!timeout) {
+                    timeout = setTimeout(function(){
+                        clearTimeout(timeout);
+                        timeout = null;
+                        fn.calc();
+                    }, o.resize_timeout);
+                }
+            });
+            fn.calc();
+
+            //set the start to the original first item
+            o.start_num = 0;
+            if (o.loop) {
+                o.start_num = o.items;
+            }
+            fn.resetPosition(o.start_num);
+
+            o.current = null;
+            $slider.scroll(onscroll);
+
+            if (!o.center && !o.loop) {
+                $slider.trigger('scroll');
+            }
+        }
+        fn.init = init;
+
+        fn.init();
         $(this).trigger('flumen.init', o);
     };
 
