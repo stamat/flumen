@@ -17,6 +17,15 @@ The distinct features of this carousel are:
 * jQuery.kinetic - https://github.com/davetayls/jquery.kinetic
 * jquery-mousewheel [optional] - https://github.com/jquery/jquery-mousewheel
 
+## Tested on
+
+* IE 10 and 11
+* Firefox 12 and 46
+* iOS 8.3 Safari (iPhone 4s)
+* iOS 10.3 Safari (iPhone 5s)
+* Google Chrome 56
+
+**Doesn't work on**: IE 9 and below, I might add the support for them in the future, if I'm ever bored in life... haha! :P
 
 ## Usage
 
