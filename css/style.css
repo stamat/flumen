@@ -8,6 +8,12 @@
 
 }
 
+.slider.no-flexbox {
+    display: block;
+    width: auto;
+    white-space: nowrap;
+}
+
 .content {
     margin: 0 auto;
     margin-top: 200px;
@@ -28,6 +34,10 @@
   position: relative;
 }
 
+.slider.no-flexbox > div {
+    display: inline-block;
+}
+
 /*
 .num-7 {
     width: 500px !important;
@@ -42,7 +52,7 @@
     height: 250px !important;
 }
 */
- 
+
 .marker {
     position: absolute;
     width: 1px;
