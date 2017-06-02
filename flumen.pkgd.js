@@ -747,7 +747,7 @@
 
 
 /*!
- * Flumen v1.0.1
+ * Flumen v1.0.2
  *
  * License MIT
  *
