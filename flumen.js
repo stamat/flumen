@@ -65,8 +65,11 @@
         o.elem = $slider;
 
         if (is_safari || is_mobile) {
-            $slider.css('overflow-x', 'auto');
             o.mousewheel = false;
+        }
+
+        if (!o.mousewheel) {
+            $slider.css('overflow-x', 'auto');
         }
 
         var animated = false;
