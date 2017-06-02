@@ -50,7 +50,7 @@ There are some currently in development options. The first version of this jQuer
 
     'dots' [default: false] //in development
 
-    'mousewheel' [default: false] //in development
+    'mousewheel' [default: true] - enables jquery-mousewheel events, this makes a mess on OSX thought with their swipe between pages
 
     'speed' [default: 300] - goTo, Left and Right movement animation speed
 
