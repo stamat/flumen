@@ -812,14 +812,6 @@
         };
         o.elem = $slider;
 
-        if (is_safari || is_mobile) {
-            o.mousewheel = false;
-        }
-
-        if (!o.mousewheel) {
-            $slider.css('overflow-x', 'auto');
-        }
-
         var animated = false;
         function goTo(num, speed) {
             var item = o.map[num];
@@ -1099,6 +1091,15 @@
 
         function init() {
             $.extend(o, opt);
+
+            if (is_safari || is_mobile) {
+                o.mousewheel = false;
+            }
+
+            if (!o.mousewheel) {
+                console.log('aaa');
+                $slider.css('overflow-x', 'auto');
+            }
 
             if (!hasFlexbox) {
                 $slider.addClass('no-flexbox');
