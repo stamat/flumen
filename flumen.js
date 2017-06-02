@@ -30,7 +30,12 @@
 
 
     $.fn.flumen = function(opt){
-        var $slider = $(this).addClass('flumen');
+        var $slider = $(this);
+        if (!$slider.length) {
+            return;
+        }
+
+        $slider.addClass('flumen');
         var mod = 50;
         var hasFlexbox = 'flex-shrink' in document.body.style;
         var timeout = null; //resize timeout, to trigger it only once on resize.
@@ -46,8 +51,10 @@
             'mousewheel': false,
             'speed': 300,
             'margin': 0,
-            'resize_timeout': 200
+            'resize_timeout': 200,
+            'events': {}
         };
+        o.elem = $slider;
 
         var animated = false;
         function goTo(num, speed) {
@@ -63,9 +70,9 @@
             }
             animated = true;
 
-            $(this).trigger('flumen.beforechange', o);
+            $slider.trigger('flumen.beforechange', o);
             $slider.stop(true).animate({ scrollLeft: left }, speed, function() {
-                $(this).trigger('flumen.afterchange', o);
+                $slider.trigger('flumen.afterchange', o);
             });
         }
         fn.goTo = goTo;
@@ -94,14 +101,14 @@
         function getCurrentVisibleItems() {
             var left = $slider.scrollLeft();
             var items = [];
+            var viewport_end = left + o.width;
 
             for (var i in o.map) {
                 var item = o.map[i];
-                // if (left < item.end && left + o.width < item.start) {
+                if (left < item.end && viewport_end > item.start) {
                     items.push(item);
-                //}
+                }
             }
-
             return items;
         }
 
@@ -118,7 +125,7 @@
         fn.resetPosition = resetPosition;
 
         function calc() {
-            $(this).trigger('flumen.beforeresize', o);
+            $slider.trigger('flumen.beforeresize', o);
             o.width = $slider.width();
 
             //this is here because we want to enable removing carousel functionality if the widht of the carousel items is less than the widht of the screen
@@ -190,21 +197,21 @@
 
             if (o.loop) {
                 if (left <= mod) {
-                    $(this).trigger('flumen.start', o);
+                    $slider.trigger('flumen.start', o);
                     $slider.scrollLeft(o.reset_left);
                 }
 
                 if (left >= o.end_position) {
-                    $(this).trigger('flumen.end', o);
+                    $slider.trigger('flumen.end', o);
                     $slider.scrollLeft(o.reset_right);
                 }
             } else {
                 if (left === 0) {
-                    $(this).trigger('flumen.start', o);
+                    $slider.trigger('flumen.start', o);
                 }
 
                 if (left >= o.end_position) {
-                    $(this).trigger('flumen.end', o);
+                    $slider.trigger('flumen.end', o);
                 }
             }
 
@@ -212,7 +219,7 @@
             var item = getCurrentItem();
             if (item && (!o.current || o.current.id !== item.id)) {
                 o.current = item;
-                $(this).trigger('flumen.slide', item);
+                $slider.trigger('flumen.slide', item, o);
             }
 
             if (scroll_end_timer) {
@@ -228,10 +235,16 @@
 
 
         $slider.on('flumen.goto', function(event, num) {
+            if (o.events.hasOwnProperty('goto')) {
+                o.events.goto(event, o);
+            }
             fn.goTo(o.start_num+num-1);
         });
 
         $slider.on('flumen.left', function(event) {
+            if (o.events.hasOwnProperty('left')) {
+                o.events.left(event, o);
+            }
             fn.goTo(o.current.id - 1);
         });
 
@@ -240,14 +253,76 @@
         });
 
         $slider.on('flumen.right', function(event) {
+            if (o.events.hasOwnProperty('right')) {
+                o.events.right(event, o);
+            }
             fn.goTo(o.current.id + 1);
         });
 
         $slider.on('flumen.slide', function(event, item) {
-            console.log(item.num);
+            $slider.find('.flumen-current').removeClass('flumen-current');
+            item.elem.addClass('flumen-current');
+
+            if (o.events.hasOwnProperty('slide')) {
+                o.events.slide(event, item, o);
+            }
+        });
+
+
+        $slider.on('flumen.start', function(event, o) {
+            if (o.events.hasOwnProperty('start')) {
+                o.events.start(event, o);
+            }
+        });
+
+        $slider.on('flumen.end', function(event, o) {
+            if (o.events.hasOwnProperty('end')) {
+                o.events.end(event, o);
+            }
+        });
+
+        $slider.on('flumen.beforechange', function(event, o) {
+            if (o.events.hasOwnProperty('beforechange')) {
+                o.events.beforechange(event, o);
+            }
+        });
+
+        $slider.on('flumen.afterchange', function(event, o) {
+            if (o.events.hasOwnProperty('afterchange')) {
+                o.events.afterchange(event, o);
+            }
+        });
+
+        $slider.on('flumen.beforeresize', function(event, o) {
+            if (o.events.hasOwnProperty('beforeresize')) {
+                o.events.beforeresize(event, o);
+            }
+        });
+
+        $slider.on('flumen.afterresize', function(event, o) {
+            if (o.events.hasOwnProperty('afterresize')) {
+                o.events.afterresize(event, o);
+            }
+        });
+
+        $slider.on('flumen.init', function(event, o) {
+            if (o.events.hasOwnProperty('init')) {
+                o.events.init(event, o);
+            }
         });
 
         $slider.on('flumen.stop', function(event, o) {
+            o.visible = getCurrentVisibleItems();
+            $slider.find('.flumen-visible').removeClass('flumen-visible');
+
+            for (var i = 0; i < o.visible.length; i++) {
+                o.visible[i].elem.addClass('flumen-visible');
+            }
+
+            if (o.events.hasOwnProperty('stop')) {
+                o.events.stop(event, o);
+            }
+
             if (o.current.cloned && animated) {
                 animated = false;
                 fn.resetPosition(o.orig_map[o.current.num].id);
@@ -310,11 +385,14 @@
             if (!o.center && !o.loop) {
                 $slider.trigger('scroll');
             }
+
+            $slider.trigger('flumen.init', o);
+
+            return $slider;
         }
         fn.init = init;
 
-        fn.init();
-        $(this).trigger('flumen.init', o);
+        return fn.init();
     };
 
 })(jQuery);
